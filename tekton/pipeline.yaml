@@ -2,7 +2,8 @@
 # This pipeline needs the following tasks from Tekton Hub
 #   - git-clone
 #   - flake8
-#
+# The tasks are installed from tekton hub just like we would install them from OpenShift earlier
+# then they are called through taskRef
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
@@ -36,3 +37,17 @@ spec:
         value: $(params.branch)
       runAfter:
         - init
+  
+    - name: lint
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskRef:
+        name: flake8 # installed from tekton hub
+      params:
+      - name: image
+        value: "python:3.9-slim"
+      - name: args
+        value: ["--count","--max-complexity=10","--max-line-length=127","--statistics", "--ignore=E402,F841,F401,E302,E305,W293,W292"] # since the code passed CI linting, just ignore space related issues
+      runAfter:
+        - clone
